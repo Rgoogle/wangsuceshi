@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity" android:orientation="vertical">
+
+
+    <EditText
+            android:id="@+id/download_url"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="TCP下载：输入链接(建议https)(不需要选择文件)。如果是UDP上传(需要选择文件) 请输入ip:端口 例如:116.128.135.46:16006    如果是116.128.135.46这样 那么自动使用默认端口"
+    />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+            <TextView
+                    android:id="@+id/file_path"
+                    android:layout_width="800px" android:layout_height="wrap_content"
+                    android:hint="文件路径: "/>
+            <Button android:id="@+id/chooss_file_button"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="选择文件"></Button>
+
+    </LinearLayout>
+
+    <RadioGroup
+            android:id="@+id/protocal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton    android:id="@+id/TCP"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TCP"/>
+            <RadioButton    android:id="@+id/UDP"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="UDP"/>
+    </RadioGroup>
+
+    <RadioGroup
+            android:id="@+id/is_down"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+        <RadioButton    android:id="@+id/up"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="上传"/>
+        <RadioButton    android:id="@+id/down"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="下载"/>
+    </RadioGroup>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="线程数:"/>
+            <TextView android:id="@+id/xain_cheng_shu"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1"></TextView>
+            <SeekBar android:id="@+id/seek_bar_menu"
+                    android:layout_width="800px" android:layout_height="80px"/>
+
+    </LinearLayout>
+
+    <TextView
+            android:id="@+id/wang_su"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="网速:"
+    />
+    <Button android:id="@+id/start_button"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="开始"
+    />
+    <Button android:id="@+id/stop_button"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="停止"/>
+
+    <Button android:id="@+id/back_run"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="后台运行"
+    />
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:text="仅供学习交流，严禁用于商业用途，请于24小时内删除。严禁利用软件损害他人合法利益,对使用本软件造成的任何损失，本作者概不负责"/>
+</LinearLayout>
