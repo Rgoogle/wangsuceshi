@@ -41,7 +41,7 @@ public class DownloadTeadUDPUp extends DownloadThread{
                     Thread.currentThread().interrupt();
                     break;
                 }
-                System.out.println("UDP上传");
+                //System.out.println("UDP上传");
             }
         } catch (SocketException e) {
             throw new RuntimeException(e);

@@ -3,7 +3,7 @@ package com.baiyu.cewangsu;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
+
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 
@@ -28,7 +28,8 @@ public class DownloadServer extends Service {
             DownloadThread downloadThread=null;
             if(TCP) {
                 if(!UP){
-                   downloadThread = new DownloadThread();//TCP 下载
+                    downloadThread = new DownloadThread();//TCP 下载
+                    ApplicationFile.setJsonObjectUrl(intent.getStringExtra("url"));
                 }
                 else {
                    //downloadThread=new DownloadThreadTCPUp();//TCP 上传

@@ -1,57 +1,59 @@
 package com.baiyu.cewangsu;
 
 import android.Manifest;
-import android.content.ContentUris;
-import android.content.Context;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.location.GnssAntennaInfo;
 import android.net.Uri;
 import android.os.*;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
-import android.provider.OpenableColumns;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.*;
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener,RadioGroup.OnCheckedChangeListener {
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener,RadioGroup.OnCheckedChangeListener,AdapterView.OnItemSelectedListener {
     //下载链接
-    static EditText downloadUrl;
+     EditText downloadUrl;
     //开始按钮
-    static Button startButton;
+     Button startButton;
     //停止按钮
-    static Button stopButton;
+     Button stopButton;
     //后台运行
-    static Button backrun;
+     Button backrun;
 
     //线程数目
-    static TextView xiancChengShu;
+     TextView xiancChengShu;
     //拖拽进度条
-    static SeekBar seekBar;
+     SeekBar seekBar;
     //单选框
-    static RadioGroup radioGroup1;
+     RadioGroup radioGroup1;
     //文件路径
-    static TextView filePath;
+     TextView filePath;
     //选择文件按钮
-    static Button chooseFileButton;
+     Button chooseFileButton;
 
+    //显示网速
+     TextView wangSu;
 
-    static TextView wangSu;
+     RadioButton radioButtonUp;//上传选择
+     RadioButton radioButtonDown;//下载选择
+     RadioButton radioButtonTCP;//TCP协议选择
 
-    static RadioButton radioButtonUp;
-    static RadioButton radioButtonTCP;
+     RadioButton radioButtonUDP;//UDP 协议选择
+     Handler wsHnadler ;
 
+     Spinner spinnerURL;//连接下拉列表
 
-    private Handler wsHnadler ;
+    List<String> spinnerDate;
 
+    ArrayAdapter<String> arrayAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,29 +61,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         downloadUrl=findViewById(R.id.download_url);
         startButton= findViewById(R.id.start_button);
-        startButton.setOnClickListener(this);
+        startButton.setOnClickListener(this);//开始按钮
+
         xiancChengShu =findViewById(R.id.xain_cheng_shu);
         chooseFileButton=findViewById(R.id.chooss_file_button);
         chooseFileButton.setOnClickListener(this);
         filePath=findViewById(R.id.file_path);
         stopButton=findViewById(R.id.stop_button);
         stopButton.setOnClickListener(this);
-        stopButton.setEnabled(false);
+
+        spinnerURL = findViewById(R.id.spinnerURLRecord);
+        spinnerDate=new ArrayList<>();//
 
         seekBar=findViewById(R.id.seek_bar_menu);
         seekBar.setOnClickListener(this);
         seekBar.setOnSeekBarChangeListener(this);
         backrun=findViewById(R.id.back_run);
         backrun.setOnClickListener(this);
+        backrun.setEnabled(false);
         radioButtonUp=findViewById(R.id.up);//上传单选
+        radioButtonDown=findViewById(R.id.down);//下载
         wangSu=findViewById(R.id.wang_su);
 
         radioGroup1 = findViewById(R.id.is_down);
         radioGroup1.setOnCheckedChangeListener(this);//监听选中上传还是下载
 
         radioButtonTCP=findViewById(R.id.TCP);
+        radioButtonUDP=findViewById(R.id.UDP);
+
+        ApplicationFile.createConfigurationFile(this);//创建配置文件 记录用过的连接
+
+        //文件 获取按钮状态
+        boolean[] bool=ApplicationFile.getSwitchCondiction();
+        if (bool[0]) {
+            radioButtonTCP.setChecked(true);
+        } else {
+            radioButtonUDP.setChecked(true);
+        }
+        radioButtonUp.setChecked(bool[1]);
 
 
+        if (bool[1]) {
+            radioButtonUp.setChecked(true);
+        }
+        else {
+            radioButtonDown.setChecked(true);
+        }
+        // startButton.setEnabled(bool[0]);
+        //stopButton.setEnabled(bool[1]);//停止按钮
+       boolean boolSwitch=ApplicationFile.getStartAndStop();//获取开始和停止按钮信息
+        if (boolSwitch) {
+            startButton.setEnabled(true);stopButton.setEnabled(false);//true 开始可以
+        }
+        else {
+            startButton.setEnabled(false);stopButton.setEnabled(true);//false 开始不可以
+        }
+
+        ApplicationFile.getArraySpinnerFromFile(spinnerDate);//获取json 对象数组连接 添加到列表
+        arrayAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,spinnerDate);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        spinnerURL.setAdapter(arrayAdapter);//下拉列表添加适配器
+    //为下拉列表设置监听器
+        spinnerURL.setOnItemSelectedListener(this);
     }
 
 
@@ -103,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 stopNetwork();
                 break;
             case R.id.back_run:
-                backRun();
+                backRun();//后台运行
         }
     }
 
@@ -113,10 +154,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.INTERNET},1);
         }
     }
-    private void backRun(){
+    private void backRun(){//后台运行
+        ApplicationFile.setStartAndStop(false);
         finish();
     }
-    private void stopNetwork(){
+    private void stopNetwork(){//点击停止按钮执行该函数
+        ApplicationFile.setStartAndStop(true);//开始按钮起用
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         //stopService(new Intent(MainActivity.this,DownloadServer.class));
@@ -150,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if(UP){
                // downloadThread = new DownloadThread();//TCP 下载
                 DownloadThread.isRun=true;//为true 要求线程运行
+                ApplicationFile.setSwitchCondiction(true,false);
             }
             else {
                 //downloadThread=new DownloadThreadTCPUp();//TCP 上传
@@ -171,6 +215,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this, "还需要在输入框输入ip和端口呢!!!",Toast.LENGTH_SHORT).show();
                     return;
                 }
+                System.out.println("zhixingdaol");
+                ApplicationFile.removeSwitchCondiction();
+                ApplicationFile.setSwitchCondiction(false,true);
 
             }
             else {
@@ -180,15 +227,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         startService(intent);
+
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
+        backrun.setEnabled(true);//点击开始按钮才可以点击后台执行
         wsHnadler= new Handler(){
             @Override
             public void handleMessage(Message msg) {
                 switch (msg.what) {
                     case 100:
                     wangSu.setText("系统网速:" + msg.obj.toString());
-                    break;
+                     break;
                 }
                 super.handleMessage(msg);
             }
@@ -229,21 +278,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode ==10 ) {
             if(data!=null&&data.getData()!=null){
                 uri=data.getData();
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){//安卓4.4之后
+                //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){//安卓4.4之后
                     path=GetFilePath.getPath(this,uri);//获取文件路径
                     filePath.setText(path);//输入到文本显示里面
-                }
-                else {
-                    System.out.println("安卓4.4以下没有写获取路径");
-                }
+                //}
+                //else {
+                 //   System.out.println("安卓4.4以下没有写获取路径");
+               // }
               }
 
     }
     }
 
 
+    @Override//下拉列表的监听
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        downloadUrl.setText(arrayAdapter.getItem(i));
 
+    }
 
-
-
+    @Override//下拉列表的监听
+    public void onNothingSelected(AdapterView<?> adapterView) {
+        downloadUrl.setText("hello");
+    }
 }
