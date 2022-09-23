@@ -1,6 +1,8 @@
 package com.baiyu.cewangsu;
 
 import android.net.http.HttpResponseCache;
+import android.os.Handler;
+import android.os.Message;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -15,6 +17,8 @@ public class DownloadThread implements Runnable{
     static boolean isRun=false;//控制线程停止 true 为运行
     static String url;//下载链接
     static String path;//文件路径
+    static Handler loghandler;//异常handler
+
 
     @Override
     public void run() {
@@ -50,13 +54,21 @@ public class DownloadThread implements Runnable{
             }
 
         } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+            Message msg = new Message();
+            msg.obj=e.toString();
+            loghandler.sendMessage(msg);
         }
         catch (UnknownHostException e){
-            e.printStackTrace();
+            Message msg = new Message();
+            msg.obj=e.toString();
+            loghandler.sendMessage(msg);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+
+            Message msg = new Message();
+            msg.obj=e.toString();
+            loghandler.sendMessage(msg);
+
         }
 
     }

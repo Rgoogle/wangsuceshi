@@ -17,7 +17,17 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * 欠流量统计功能
+ * http 服务器响应数据异常 更新ui 未解决  ✔
+ * 下拉列表无删除功能
+ * 下拉列表 无限增加连接 ✔
+ * app 再次打开 无法恢复上次使用的url  ✔
+ * 实时网速有问题
+ * 后台运行按钮需要调整
+ * 重要一点 app 需要重构 代码沉余验证
+ * 作者对于权限 也是迷迷糊糊 不知道要不要申请
+ * */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener,RadioGroup.OnCheckedChangeListener,AdapterView.OnItemSelectedListener {
     //下载链接
      EditText downloadUrl;
@@ -47,18 +57,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      RadioButton radioButtonTCP;//TCP协议选择
 
      RadioButton radioButtonUDP;//UDP 协议选择
-     Handler wsHnadler ;
+     Handler wsHnadler ;//网速handler
+    Handler logHandler;
 
-     Spinner spinnerURL;//连接下拉列表
+    Spinner spinnerURL;//连接下拉列表
 
     List<String> spinnerDate;
 
     ArrayAdapter<String> arrayAdapter;
+
+    static TextView logError;
+
+    /**下拉列表第一次打开 自动就执行了监听方法 气死了 试了其他方法都不行， 只能这样了*/
+    static boolean isFirst=true;//true 表示第一次打开app
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        logError=findViewById(R.id.logArea);
         downloadUrl=findViewById(R.id.download_url);
         startButton= findViewById(R.id.start_button);
         startButton.setOnClickListener(this);//开始按钮
@@ -120,7 +137,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ApplicationFile.getArraySpinnerFromFile(spinnerDate);//获取json 对象数组连接 添加到列表
         arrayAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,spinnerDate);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+
         spinnerURL.setAdapter(arrayAdapter);//下拉列表添加适配器
+
     //为下拉列表设置监听器
         spinnerURL.setOnItemSelectedListener(this);
     }
@@ -189,10 +208,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         boolean UP=radioButtonTCP.isChecked();
         DownloadThread.url =url;//下载链接
         DownloadThread.path=path;//文件路径
+
+        //异常更新ui
+        this.logHandler=new Handler() {
+            @Override
+            public void handleMessage(Message msg){
+                logError.setText(msg.obj.toString());
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
+            }
+        };
+
         if(TCP) {
             if(UP){
                // downloadThread = new DownloadThread();//TCP 下载
                 DownloadThread.isRun=true;//为true 要求线程运行
+                DownloadThread.loghandler=this.logHandler;//让子线程能通知主线程修改ui
                 ApplicationFile.setSwitchCondiction(true,false);
             }
             else {
@@ -215,7 +246,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this, "还需要在输入框输入ip和端口呢!!!",Toast.LENGTH_SHORT).show();
                     return;
                 }
-                System.out.println("zhixingdaol");
+
+
+                DownloadThread.loghandler=this.logHandler;
                 ApplicationFile.removeSwitchCondiction();
                 ApplicationFile.setSwitchCondiction(false,true);
 
@@ -225,7 +258,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
         }
-
+        if (ApplicationFile.isExisitInArray(downloadUrl.getText().toString())) {//true 表示连接不存在  要加连接？
+            ApplicationFile.insertUrlRecord(spinnerDate.size());//下拉列表长度加1
+        }
         startService(intent);
 
         startButton.setEnabled(false);
@@ -293,12 +328,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override//下拉列表的监听
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        downloadUrl.setText(arrayAdapter.getItem(i));
+        System.out.println("wuwuwuwuwuwu");
+        if(isFirst){
+            downloadUrl.setText(arrayAdapter.getItem(ApplicationFile.getUrlRecord()));
+            isFirst=false;
+            }//第一次 在文件读取 位置
+        else {
 
+
+            //其他靠点击 下拉列表获取位置
+            ApplicationFile.insertUrlRecord(i);
+            downloadUrl.setText(arrayAdapter.getItem(i));
+        }
     }
 
     @Override//下拉列表的监听
-    public void onNothingSelected(AdapterView<?> adapterView) {
-        downloadUrl.setText("hello");
+    public void onNothingSelected(AdapterView<?> adapterView) {//Adapter 为空时候执行这个方法
+
     }
 }

@@ -45,7 +45,7 @@ public class ApplicationFile {
 
             if(jsonString.length() == 0){
                 System.out.println("文件空内容:写入成功");
-                jsonString="{\"url\":[\"https:\\/\\/baidu.com\",\"https:\\/\\/pm.myapp.com\\/invc\\/xfspeed\\/qqpcmgr\\/download\\/QQPCDownload320001.exe\"],\"TCP\":true,\"UP\":false,\"switch\":true}";
+                jsonString="{\"url\":[\"https:\\/\\/baidu.com\",\"https:\\/\\/pm.myapp.com\\/invc\\/xfspeed\\/qqpcmgr\\/download\\/QQPCDownload320001.exe\"],\"TCP\":true,\"UP\":false,\"switch\":true,\"pos\":1}";
 
             }
             else {
@@ -67,14 +67,23 @@ public class ApplicationFile {
     }
 
     public static void setJsonObjectUrl(String url) {
+        boolean bool=isExisitInArray(url);//判断是否存在再加，不然会重复 false 为不可加  true 为可添加
         try {
+
+
             jsonArray=jsonObject.getJSONArray("url");
            // System.out.println("测试"+jsonArray);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
 
-        jsonArray.put(url);
+        if (bool) {//true 表示要添加
+            jsonArray.put(url);
+        }
+        else {//有就啥都不做
+            return;
+        }
+
 
         try {
             jsonObject.put("url",jsonArray);
@@ -159,6 +168,48 @@ public class ApplicationFile {
                 spinnerData.add(jsonArray1.getString(i));
             }
 
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public static boolean isExisitInArray(String url){//true 表示 连接不存在 false 表示 连接存在
+        JSONArray jsonArray1= null;
+        //url=url.replace("//","\\/\\/");
+
+        try {
+            jsonArray1 = jsonObject.getJSONArray("url");
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        for (int i = 0; i < jsonArray1.length(); i++) {
+            try {
+                if (url.equals(jsonArray1.getString(i))) {
+                    return false;
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return true;
+    }
+
+    public static void insertUrlRecord(int position){//记录下列列表的位置
+        try {
+
+            jsonObject.remove("pos");
+            jsonObject.put("pos",position);//
+            loadFile();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int getUrlRecord(){
+        try {
+            return jsonObject.getInt("pos");
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }

@@ -2,12 +2,14 @@ package com.baiyu.cewangsu;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
 
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 public class DownloadServer extends Service {
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -29,6 +31,7 @@ public class DownloadServer extends Service {
             if(TCP) {
                 if(!UP){
                     downloadThread = new DownloadThread();//TCP 下载
+
                     ApplicationFile.setJsonObjectUrl(intent.getStringExtra("url"));
                 }
                 else {
