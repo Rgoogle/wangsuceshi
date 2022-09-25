@@ -45,7 +45,7 @@ public class ApplicationFile {
 
             if(jsonString.length() == 0){
                 System.out.println("文件空内容:写入成功");
-                jsonString="{\"url\":[\"https:\\/\\/baidu.com\",\"https:\\/\\/pm.myapp.com\\/invc\\/xfspeed\\/qqpcmgr\\/download\\/QQPCDownload320001.exe\"],\"TCP\":true,\"UP\":false,\"switch\":true,\"pos\":1}";
+                jsonString="{\"url\":[\"https:\\/\\/gameplus-platform.cdn.bcebos.com\\/gameplus-platform\\/upload\\/file\\/source\\/9752b85b3f8bddf3c09e1f6b41433d27.apk\",\"https:\\/\\/pm.myapp.com\\/invc\\/xfspeed\\/qqpcmgr\\/download\\/QQPCDownload320001.exe\"],\"TCP\":true,\"UP\":false,\"switch\":true,\"pos\":1}";
 
             }
             else {
@@ -166,6 +166,7 @@ public class ApplicationFile {
             for (int i = 0; i < jsonArray1.length(); i++) {
                 //System.out.println("hello:"+jsonArray1.getString(i));
                 spinnerData.add(jsonArray1.getString(i));
+
             }
 
         } catch (JSONException e) {
@@ -212,6 +213,46 @@ public class ApplicationFile {
             return jsonObject.getInt("pos");
         } catch (JSONException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    public static void setTotalData(long totalData){
+        jsonObject.remove("totalData");
+        try {
+            jsonObject.put("totalData",totalData);
+            loadFile();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static long getTotalData(){
+        try {
+            return jsonObject.getLong("totalData");
+        } catch (JSONException e) {
+            return 0;
+        }
+    }
+
+
+    public static void setBackGroupRun(boolean bool){
+        try {
+            jsonObject.remove("backRun");
+            jsonObject.put("backRun",bool);//true 为需要开启网速检测
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
+    public static boolean getBackGroupRun(){
+        try {
+            return jsonObject.getBoolean("backRun");
+        } catch (JSONException e) {//获取不到
+            return true;
         }
     }
 }

@@ -8,20 +8,23 @@
         tools:context=".MainActivity" android:orientation="vertical">
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-    <EditText
-            android:id="@+id/download_url"
-            android:layout_width="350dp" android:layout_height="wrap_content"
-            android:hint="TCP下载：输入链接(建议https)(不需要选择文件)。如果是UDP上传(需要选择文件) 请输入ip:端口 例如:116.128.135.46:16006    如果是116.128.135.46这样 那么自动使用默认端口"
-    />
-  <Spinner
-            android:id="@+id/spinnerURLRecord"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:spinnerMode="dropdown"
+        <EditText
 
-  >
+                android:id="@+id/download_url"
+                android:layout_width="350dp" android:layout_height="wrap_content"
+               />
+        <!-- android:hint="TCP下载：输入链接(建议https)(不需要选择文件)。如果是UDP上传(需要选择文件) 请输入ip:端口 例如:116.128.135.46:16006    如果是116.128.135.46这样 那么自动使用默认端口"
+        -->
+        <Spinner
+                android:id="@+id/spinnerURLRecord"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:spinnerMode="dropdown"
 
 
-    </Spinner>
+        >
+
+
+        </Spinner>
 
     </LinearLayout>
     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -78,13 +81,17 @@
     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content">
         <TextView
                 android:id="@+id/totalUsage"
-                android:layout_width="150dp" android:layout_height="wrap_content"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="历史总流量:"
         />
+
+        <TextView
+                android:id="@+id/totalData"
+                android:layout_width="150dp" android:layout_height="wrap_content"/>
         <TextView
             android:id="@+id/wang_su"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="网速:"
+            android:text="网速:无网络传输"
     />
     </LinearLayout>
     <Button android:id="@+id/start_button"

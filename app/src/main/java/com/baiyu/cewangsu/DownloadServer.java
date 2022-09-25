@@ -54,7 +54,9 @@ public class DownloadServer extends Service {
                     }*/
 
                     //System.out.println("url"+DownloadThread.url.split(":")[0].length());
+
                      downloadThread = new DownloadTeadUDPUp();//UDP 上传
+                    ApplicationFile.setJsonObjectUrl(intent.getStringExtra("url"));
                 }
                 else {
 
