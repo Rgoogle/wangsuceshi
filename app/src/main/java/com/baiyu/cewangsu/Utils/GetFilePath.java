@@ -1,4 +1,4 @@
-package com.baiyu.cewangsu;
+package com.baiyu.cewangsu.Utils;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -32,7 +32,7 @@ public class GetFilePath {
         return null;
     }
     public static String getFileName(Uri uri) {
-        if (uri == null) return null;
+        if (uri == null) {return null;}
         String fileName = null;
         String path = uri.getPath();
         int cut = path.lastIndexOf('/');
@@ -45,7 +45,7 @@ public class GetFilePath {
     public static void copyFile(Context context, Uri srcUri, File dstFile) {
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(srcUri);
-            if (inputStream == null) return;
+            if (inputStream == null) {return;}
             OutputStream outputStream = new FileOutputStream(dstFile);
             copyStream(inputStream, outputStream);
             inputStream.close();

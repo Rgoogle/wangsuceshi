@@ -1,9 +1,8 @@
-package com.baiyu.cewangsu;
+package com.baiyu.cewangsu.DownloadThread;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.URL;
 
 public class DownloadThreadTCPUp extends DownloadThread{
@@ -30,7 +29,7 @@ public class DownloadThreadTCPUp extends DownloadThread{
             conn.connect();
             OutputStream out =new DataOutputStream(conn.getOutputStream());
             InputStream in = new DataInputStream(fis);
-            byte[] buff=new byte[1024];//1kb
+            byte[] buff=new byte[1024];//1kB
             int len=in.read(buff);
 
             while (len != -1) {

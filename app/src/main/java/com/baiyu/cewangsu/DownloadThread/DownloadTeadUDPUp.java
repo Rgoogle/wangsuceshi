@@ -1,12 +1,10 @@
-package com.baiyu.cewangsu;
-
-import android.net.InetAddresses;
+package com.baiyu.cewangsu.DownloadThread;
 
 import java.io.*;
 import java.net.*;
 
 public class DownloadTeadUDPUp extends DownloadThread{
-    static boolean isRun=false;//控制线程停止 true 为运行
+    public static boolean isRun=false;//控制线程停止 true 为运行
     private File file=new File(path);
     private InetAddress inet;
     @Override
