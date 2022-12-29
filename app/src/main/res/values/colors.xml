@@ -8,4 +8,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="red_001">#FF0000</color>
+    <color name="yuejihong">#c95574</color>
+    <color name="zhihong">#CC0066</color>
 </resources>

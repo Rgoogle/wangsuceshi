@@ -29,11 +29,11 @@ public class DownloadServer extends Service {
         super.onCreate();
         //PowerManager.PARTIAL_WAKE_LOCK：表示CPU保持运行， 。
         //MyWakelockTag：表示唤醒锁的标签，可以用于在日志中标识唤醒锁,表示为这个WakeLock定义一个标签，以便在检查电源使用情况时能够识别它
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        @SuppressLint("InvalidWakeLockTag")
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                "MyWakelockTag");
-        wakeLock.acquire();
+//        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+//        @SuppressLint("InvalidWakeLockTag")
+//        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+//                "MyWakelockTag");
+//        wakeLock.acquire();
 //         在不再需要WakeLock时释放：
 //wakeLock.release();
     }

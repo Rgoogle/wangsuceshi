@@ -3,12 +3,18 @@ package com.baiyu.cewangsu;
 import android.Manifest;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.os.*;
 
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
@@ -20,7 +26,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.baiyu.cewangsu.DownloadThread.DownloadTeadUDPUp;
 import com.baiyu.cewangsu.DownloadThread.DownloadThread;
-import com.baiyu.cewangsu.DownloadThread.DownloadThreadTCPUp;
 import com.baiyu.cewangsu.Utils.ApplicationFile;
 import com.baiyu.cewangsu.Utils.GetFilePath;
 import com.baiyu.cewangsu.Utils.NetWorkSpeedUtils;
@@ -31,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, RadioGroup.OnCheckedChangeListener, AdapterView.OnItemSelectedListener, TextWatcher {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, RadioGroup.OnCheckedChangeListener, AdapterView.OnItemSelectedListener, TextWatcher, View.OnLongClickListener {
     //下载链接
     EditText downloadUrl;
     //开始按钮
@@ -43,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * 当前正在运行的线程数 静态的好处是程序不死一直在内存中，活动死了都还在 控件除外
      */
-    TextView currentRunThreadNum;
+    static TextView currentRunThreadNum;
 
     //线程数目
     TextView xiancChengShu;
@@ -76,13 +81,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static TextView logError;
 
     static TextView totalData;//历史总流量
-
-    NetWorkSpeedUtils netWorkSpeedUtils;//为了能结束实时网速 没有办法
+    /**
+     * 本次已用的流量
+     */
+    static TextView usedData;
+    /**
+     * 同上，只不过是记录用的
+     */
+    static String tempUsedData = "0MB";
+    /**
+     * 最大流量上限
+     */
+    EditText threshold;
+    /**
+     * 因为程序的需要 获取用户输入的阈值 赋值给这个变量
+     */
+    static Double calThreshold;
+    static NetWorkSpeedUtils netWorkSpeedUtils;//为了能结束实时网速 没有办法
 
 
     Button helpButton;//帮助按钮
 
-    static int currentRunTheadNumber=0;
+    static int currentRunTheadNumber = 0;
     /**
      * 下拉列表第一次打开 自动就执行了监听方法 气死了 试了其他方法都不行， 只能这样了
      */
@@ -102,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ApplicationFile.createConfigurationFile(this);
 
         //文件获取历史总流量
-        totalData.setText(NetWorkSpeedUtils.showSpeed(ApplicationFile.getTotalData()));
+        totalData.setText(NetWorkSpeedUtils.getShow(ApplicationFile.getTotalData()));
 
         if (wsHnadler == null) {
             startCheckSpeed();
@@ -136,12 +156,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            stopButton.setEnabled(true);//false 开始不可以
 //        }
         //两个下载其中一个成立 决定从文件获取总共流量， 两个不运行，从文件获取内容
-        if(!DownloadThread.isRun) {
+        if (!DownloadThread.isRun) {
             NetWorkSpeedUtils.totalData = ApplicationFile.getTotalData();//B 一开始就要文件获取总流量
 //            System.out.println("服务不在运行");
 
         }
-
 
 
         //System.out.println("hhheee:"+NetWorkSpeedUtils.totalData);
@@ -199,6 +218,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onStart() {
         super.onStart();
+
     }
 
     /**
@@ -207,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+
     }
 
     /**
@@ -240,8 +261,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         chooseFileButton = findViewById(R.id.chooss_file_button);
         chooseFileButton.setOnClickListener(this);
         filePath = findViewById(R.id.file_path);
+        //停止按钮
         stopButton = findViewById(R.id.stop_button);
         stopButton.setOnClickListener(this);
+        stopButton.setOnLongClickListener(this);
 
         spinnerURL = findViewById(R.id.spinnerURLRecord);
         spinnerDate = new ArrayList<>();//
@@ -261,15 +284,75 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         radioButtonTCP = findViewById(R.id.TCP);
         radioButtonUDP = findViewById(R.id.UDP);
-
+        //帮助按钮
         helpButton = findViewById(R.id.helpButton);
         helpButton.setOnClickListener(this);
+        helpButton.setOnLongClickListener(this);
         //当前正在运行的线程数
-        currentRunThreadNum=findViewById(R.id.current_run_thread);
-        currentRunThreadNum.setText("当前正在运行线程数:"+currentRunTheadNumber);
+        currentRunThreadNum = findViewById(R.id.current_run_thread);
+        currentRunThreadNum.setText("当前正在运行线程数:" + currentRunTheadNumber);
 
+        usedData = findViewById(R.id.usedData);
+        usedData.setText(tempUsedData);
+        threshold = findViewById(R.id.threshold);
     }
 
+    /**
+     * 检测应用是否被电池优化
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isIgnoringBatteryOptimizations(Context context) {
+        boolean isIgnoring = false;
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isIgnoring = pm.isIgnoringBatteryOptimizations(context.getPackageName());
+        }
+        return isIgnoring;
+    }
+
+    /**
+     * 如果检测到应用被电池优化，就弹出提示框
+     *
+     * @param context
+     */
+    private void topTip(Context context) {
+
+        if (!isIgnoringBatteryOptimizations(context)) {
+            //弹出提示框，提示用户去掉对应用的电池优化
+            new AlertDialog.Builder(context)
+                    .setTitle("提示")
+                    .setMessage("为了更好的体验，请去掉对应用的电池优化")
+                    .setPositiveButton("去设置", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent();
+                            intent.setComponent(new ComponentName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity"));
+                            intent.putExtra("package_name", getPackageName());
+                            intent.putExtra("package_label", getResources().getString(R.string.app_name));
+                            List<ResolveInfo> resolveInfos = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                            if (resolveInfos.size() > 0) {
+                                startActivity(intent);
+                            } else {
+                                intent = new Intent();
+                                intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                                startActivity(intent);
+                            }
+
+
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        } else {
+            new AlertDialog.Builder(context)
+                    .setTitle("提示")
+                    .setMessage("您已取消电池优化!")
+                    .setNegativeButton("确定", null)
+                    .show();
+        }
+    }
 
     /**
      * 各种监听事件 点击事件处理
@@ -304,11 +387,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 弹出帮助按钮
      */
     private void lauchHelpFragment() {
-        TextView webText = new TextView(this);
-        webText.setText("https:bing.com");
-        webText.setLinksClickable(true);
-        webText.setAutoLinkMask(1);
-        webText.setMovementMethod(LinkMovementMethod.getInstance());
+//        TextView webText = new TextView(this);
+//        webText.setText("https:bing.com");
+//        webText.setLinksClickable(true);
+//        webText.setAutoLinkMask(1);
+//        webText.setMovementMethod(LinkMovementMethod.getInstance());
+        Intent intent = new Intent(this, HelpActivity.class);
+        startActivity(intent);
     }
 
     private void openNetWork() {
@@ -326,13 +411,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        super.onBackPressed();
     }
 
-    private void stopNetwork() {//点击停止按钮执行该函数
+    private static void stopNetwork() {//点击停止按钮执行该函数
         netWorkSpeedUtils.stopTimerTask();//结束网速检测 但是网速没有置0
 
         wangSu.setText("网速:无网络传输");
         //线程数置为0
         currentRunThreadNum.setText("当前正在运行线程数:0");
-        currentRunTheadNumber=0;
+        currentRunTheadNumber = 0;
 
 //        ApplicationFile.setStartAndStop(true);//开始按钮起用
 //        startButton.setEnabled(true);
@@ -356,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         CharSequence nums = xiancChengShu.getText();
         //当前正在运行的线程数
-        calCurrentRunThread( nums);
+        calCurrentRunThread(nums);
 
         //int num=Integer.valueOf(nums.toString()).intValue();
         Intent intent = new Intent(this, DownloadServer.class);
@@ -415,6 +500,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ApplicationFile.insertUrlRecord(spinnerDate.size());//下拉列表长度加1
         }
 
+        //-1表示用户无输入 其他表示用户输入的阈值
+        calThreshold = getThreshole();
 
         startService(intent);
 
@@ -424,11 +511,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //backrun.setEnabled(true);//点击开始按钮才可以点击后台执行
         startCheckSpeed();
         netWorkSpeedUtils = NetWorkSpeedUtils.getInstance(this, wsHnadler);
-        System.out.println("KKKKK:"+NetWorkSpeedUtils.taskList.size());
-        if(NetWorkSpeedUtils.taskList.size()<=0){
+//        System.out.println("KKKKK:" + NetWorkSpeedUtils.taskList.size());
+        if (NetWorkSpeedUtils.taskList.size() <= 0) {
             netWorkSpeedUtils.startShowNetSpeed();
         }
 
+    }
+
+
+    /**
+     * 界面获取用户输入的阈值 -1表示用户没有输入 其他表示用户输入了
+     */
+    private Double getThreshole() {
+        String n = threshold.getText().toString();
+        if (n.length() == 0) {
+            return Double.valueOf(-1);
+        }
+//  单位B
+        return Double.valueOf(n) * 1024d * 1024d * 1024d;
     }
 
     private void startCheckSpeed() {
@@ -522,19 +622,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * 计算当前有多少线程在运行
      */
-    private void calCurrentRunThread(CharSequence n){
-        String nums=currentRunThreadNum.getText().toString();
-        int num0= Integer.parseInt(nums.substring(10));
-        int num1= Integer.parseInt((String)n);
-        System.out.println("ceshsishsishis:"+num0+"   "+num1);
-        currentRunTheadNumber=num0+num1;
-        currentRunThreadNum.setText("当前正在运行线程数:"+currentRunTheadNumber);
+    private void calCurrentRunThread(CharSequence n) {
+        String nums = currentRunThreadNum.getText().toString();
+        int num0 = Integer.parseInt(nums.substring(10));
+        int num1 = Integer.parseInt((String) n);
+        System.out.println("ceshsishsishis:" + num0 + "   " + num1);
+        currentRunTheadNumber = num0 + num1;
+        currentRunThreadNum.setText("当前正在运行线程数:" + currentRunTheadNumber);
     }
 
     /**
      * 判断服务是否在运行
      */
-    private boolean serverIsRunning(){
+    private boolean serverIsRunning() {
         ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningServiceInfo> serviceList = activityManager.getRunningServices(Integer.MAX_VALUE);
         if (serviceList != null) {
@@ -550,6 +650,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
+    @Override
+    public boolean onLongClick(View view) {
+        switch (view.getId()) {
+            case R.id.helpButton:
+                helpButtonLongClick();
+                return true;
+            case R.id.stop_button:
+                cancelBatteryOptimizations();
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * 提示用户 取消电池优化
+     */
+    private void cancelBatteryOptimizations() {
+        topTip(this);
+    }
+
+    /**
+     * 帮助按钮长按事件
+     */
+    private void helpButtonLongClick() {
+        NetWorkSpeedUtils.temptotal = 0L;
+        tempUsedData = "0MB";
+        usedData.setText(tempUsedData);
+    }
 
     /**
      * '
@@ -570,6 +698,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 wangSu.setText("网速:" + messages.get("speed"));
                                 //历史总流量
                                 totalData.setText(messages.get("totalhistory"));
+                                //本次已用流量
+                                tempUsedData = messages.get("temptotal");
+                                usedData.setText(tempUsedData);
+
+//                                System.out.println("定时器");
+                                isExceededthreshold(messages);
                                 break;
                         }
 
@@ -578,6 +712,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return wsHandler;
             }
             return wsHandler;
+        }
+
+        /**
+         * 是否超过阈值 超过就停止，否者就继续
+         */
+        private static void isExceededthreshold(Map<String, String> messages) {
+            //-1表示用户无输入
+            if (calThreshold == -1) {
+                return;
+            }
+            //单位B 字节
+            long temptotal = Long.parseLong(messages.get("longtemptotal"));
+            System.out.println("运行");
+            //已用流量 大于等于 阈值  说明超过了，应该停止下载
+            if (temptotal >= calThreshold) {
+                stopNetwork();
+            }
         }
 
         public static Handler getLogHandlerSingleton() {

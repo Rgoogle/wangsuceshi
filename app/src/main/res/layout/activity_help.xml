@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <ScrollView android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:orientation="vertical">
+            <TextView android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:text="1.TCP下载\n    1.1 输入正确的url连接->如图"
+                      android:textSize="30dp"
+                      android:textColor="@color/yuejihong"/>
+            <ImageView android:layout_width="match_parent"
+                       android:layout_height="900dp"
+                       android:src="@drawable/tcpdown"/>
+
+
+            <TextView android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:text="2.UDP下载\n    2.1 输入一个ip地址和端口号,然后选择一个文件,例如点击一个图片->如图\n   2.2 其实端口号也可以不填,软件设置默认端口，直接填ip地址也可以,例如8.8.8.8"
+                      android:textSize="30dp"
+                      android:textColor="@color/yuejihong"/>
+            <ImageView android:layout_width="match_parent"
+                       android:layout_height="900dp"
+                       android:src="@drawable/udpup"/>
+
+
+            <TextView android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:text="3.提示\n   3.1 长按帮助按钮可以清除已用流量\n   3.2 长按停止按钮进入取消电池优化"
+                      android:textSize="30dp"
+                      android:textColor="@color/red_001"/>
+        </LinearLayout>
+
+    </ScrollView>
+</LinearLayout>

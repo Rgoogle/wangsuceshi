@@ -27,11 +27,11 @@ public class NetWorkSpeedUtils {
     private Handler mHandler;
 
     /**
-     * 临时历史总流量，这次打开应用用的总流量
+     * 临时历史总流量，这次打开应用用的总流量 单位 B
      */
     public volatile static long temptotal = 0L;
     /**
-     * 文件获取历史总流量，感觉没用 单位 字节 B
+     * 文件获取历史总流量,单位 字节 B
      */
     public static long totalData = 0L;
 
@@ -146,6 +146,8 @@ public class NetWorkSpeedUtils {
         
         messages.put("speed", showSpeed(speed));
         messages.put("totalhistory", getTotalData(speed));
+        messages.put("temptotal",getShow(temptotal));
+        messages.put("longtemptotal", String.valueOf(temptotal));
 //        System.out.println("正在运行"+showSpeed(temptotal)+"   "+showSpeed(speed)+"+"+s+"="+showSpeed(totalData));
         msg.obj = messages;
         //更新界面
@@ -170,7 +172,7 @@ public class NetWorkSpeedUtils {
         }//小于 1MB  大于等于B  单位应该是kb/s
         else if (speed < 1048576L && speed >= 1024L) {
 
-            speedString = showFloatFormat.format(speed / 1024d) + "KBk/s";
+            speedString = showFloatFormat.format(speed / 1024d) + "KB/s";
             return speedString;
         } //小于等于KB 单位应该B/s
         else if (speed < 1024L) {
@@ -184,6 +186,34 @@ public class NetWorkSpeedUtils {
 
     }
 
+    /**
+     * 获取人可读的 GB MB
+     * @param speed
+     * @return
+     */
+    public static @NotNull String getShow(long speed) {
+        String speedString = null;
+
+        //大于等于1M 单位应该MB/s
+        if (speed >= 1048756L&&speed<=1073926144L) {
+            speedString = showFloatFormat.format(speed / 1024d / 1024d) + "MB";
+            return speedString;
+        }//小于 1MB  大于等于B  单位应该是kb/s
+        else if (speed < 1048576L && speed >= 1024L) {
+
+            speedString = showFloatFormat.format(speed / 1024d) + "KB";
+            return speedString;
+        } //小于等于KB 单位应该B/s
+        else if (speed < 1024L) {
+            speedString = showFloatFormat.format(speed) + "B";
+            return speedString;
+        } else {
+            speedString = showFloatFormat.format(speed / 1024d / 1024d / 1024d) + "GB";
+            return speedString;
+        }
+
+
+    }
 
     /**
      * 计算历史总流量 人可读的 MB KB GB
@@ -196,7 +226,7 @@ public class NetWorkSpeedUtils {
             totalData += speed;
         }
 
-        total = showSpeed(totalData);
+        total = getShow(totalData);
         return total;
     }
 
@@ -206,6 +236,9 @@ public class NetWorkSpeedUtils {
     public void stopTimerTask() {
 //        task.cancel();
 //        timer.cancel();
+        if (scheduledExecutorService==null){
+            return;
+        }
         scheduledExecutorService.shutdownNow();
 
     }

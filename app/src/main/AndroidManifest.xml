@@ -2,10 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.baiyu.cewangsu" >
+<!--以下忽略电池优化-->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 <!--保持服务在息屏也可以运行 不被杀掉-->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
+
     <uses-permission android:name="android.permission.INTERNET" /><!--网络权限 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"
                      android:requestLegacyExternalStorage="true"/><!--访问 wifi权限 访问外部文件权限  -->
 
@@ -31,6 +35,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".HelpActivity"/>
         <service android:name=".DownloadServer"/>
     </application>
 
